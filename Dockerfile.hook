@@ -1,0 +1,9 @@
+FROM fpco/stack-run
+MAINTAINER "You" <you@company.com>
+
+# hook server - change the x86_64-linux-hash bit to match your system
+ADD .stack-work/install/x86_64-linux-dkda49f7ca9b244180d3cfb1987cbc9743/lts-7.13/8.0.1/bin/build-hook /usr/local/bin/build-hook
+
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/build-hook"]

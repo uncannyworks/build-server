@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-configmap
+data:
+  mysql-config: |
+    [mysqld]
+    skip-character-set-client-handshake
+    character-set-server=utf8
+    collation-server=utf8_general_ci
+    init-connect = SET NAMES utf8
+    [client]
+    protocol = TCP
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: build-client
+spec:
+  replicas: 4
+  template:
+    metadata:
+      labels:
+        run: build-client
+    spec:
+      containers:
+        - name: build-client
+          image: my-repo/build-server:latest
+          env:
+            - name: BUILD_TYPE
+              value: "client"
+            - name: CHATWORK_TOKEN
+              value: ""
+            - name: CHATWORK_ROOM
+              value: ""
+            - name: GIT_REPO
+              value: "git@bitbucket.org:my-company/server.git"
+            - name: GIT_BRANCH
+              value: "master"
+            - name: TEST_DIR
+              value: "src"
+            - name: TEST_CMD
+              value: "my test command"
+            - name: DOCKER_REPO
+              value: "my repo"
+            - name: DOCKER_NAME
+              value: ""
+            - name: DOCKER_REGION
+              value: ""
+            - name: CHATWORK_ROOM
+              value: ""
+            - name: MYSQL_DATABASE
+              value: ""
+            - name: MYSQL_USER
+              value: ""
+            - name: MYSQL_PASSWORD
+              value: ""
+            - name: MYSQL_HOST
+              value: "127.0.0.1"
+            - name: MYSQL_PORT
+              value: "3306"
+          volumeMounts:
+            - name: build-ssh-keys-volume
+              mountPath: /root/.ssh
+            - name: mysql-config-volume
+              mountPath: /etc/mysql/conf.d/
+            # mount the parent docker socket so we build on the parent rather than inside
+            - name: docker-socket
+              mountPath: /var/run/docker.sock
+            # aws specific example
+            - name: aws-keys-volume
+              mountPath: /root/.aws
+        # swap out, remove, or add additional sections to suit your specific needs
+        - name: mysql
+          image: mysql:5.7
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: ""
+            - name: MYSQL_DATABASE
+              value: "test_"
+            - name: MYSQL_USER
+              value: ""
+            - name: MYSQL_PASSWORD
+              value: ""
+            - name: MYSQL_CHARSET
+              value: "utf8"
+          ports:
+           - containerPort: 3306
+             name: mysql
+          volumeMounts:
+           - name: mysql-config-volume
+             mountPath: /etc/mysql/conf.d/
+          args:
+            - --character-set-server=utf8
+            - --collation-server=utf8_unicode_ci
+      volumes:
+        - name: build-ssh-keys-volume
+          secret:
+            secretName: build-ssh-keys
+            defaultMode: 256
+        - name: aws-keys-volume
+          secret:
+            secretName: aws-keys
+        - name: docker-socket
+          hostPath:
+            path: /var/run/docker.sock
+        - name: mysql-config-volume
+          configMap:
+            name: mysql-configmap
+            items:
+              - key: mysql-config
+                path: config-file.cnf

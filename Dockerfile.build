@@ -1,0 +1,14 @@
+FROM fpco/stack-run
+MAINTAINER "You" <you@company.com>
+
+# put your build specific stuff here
+# see https://github.com/phusion/baseimage-docker for more information about the base image
+
+# bake server - change the x86_64-linux-hash bit to match your system
+ADD .stack-work/install/x86_64-linux-dkda49f7ca9b244180d3cfb1987cbc9743/lts-7.13/8.0.1/bin/build-server /usr/local/bin/build-server
+ADD run.sh /usr/local/bin/run.sh
+RUN chmod +x /usr/local/bin/run.sh
+
+EXPOSE 5000
+
+ENTRYPOINT ["/usr/local/bin/run.sh"]

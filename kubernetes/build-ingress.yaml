@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: build-ingress
+spec:
+  rules:
+  - host: build.example.net
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: build-master
+          servicePort: 5000
+  - host: hook.example.net
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: build-master
+          servicePort: 8080
